@@ -184,7 +184,7 @@ export default {
             else this.inputValue = null
           }
         },
-        key: this.getValue(item)
+        key: this.getKey(item, index)
       }, this.getText(item))
     },
     genCommaSelection (item, comma, index) {
@@ -263,7 +263,8 @@ export default {
           avatar: item === Object(item) && this.itemAvatar in item,
           ripple: true,
           value: active
-        }
+        },
+        key: this.getKey(item, active)
       }
 
       if (disabled) {
