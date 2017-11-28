@@ -17,6 +17,14 @@ export default {
     getValue (item) {
       return this.getPropertyFromItem(item, this.itemValue)
     },
+    getKey (item, index) {
+      if (this.itemKey) {
+        return this.getPropertyFromItem(item, this.itemKey)
+      } else {
+        const value = this.getValue(item)
+        return typeof value === 'object' ? index : value
+      }
+    },
     getPropertyFromItem (item, field) {
       if (item !== Object(item)) return item
 

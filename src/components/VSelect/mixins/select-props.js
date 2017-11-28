@@ -44,6 +44,10 @@ export default {
       type: String,
       default: 'value'
     },
+    itemKey: {
+      type: String,
+      default: null
+    },
     maxHeight: {
       type: [Number, String],
       default: 300
