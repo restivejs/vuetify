@@ -176,7 +176,7 @@ export default {
 
       let selectedItems = this.computedItems.filter(i => {
         if (!this.isMultiple) {
-          if (this.itemKey) {
+          if (this.itemKey && val && this.getValue(i)) {
             return this.getValue(i)[this.itemKey] === val[this.itemKey]
           } else {
             return this.getValue(i) === this.getValue(val)
