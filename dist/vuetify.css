@@ -6010,6 +6010,10 @@ p {
 .application .theme--light.input-group.input-group--textarea:not(.input-group--full-width) .input-group__input {
   border: 2px solid rgba(0,0,0,0.54);
 }
+.theme--light .input-group.input-group--solo,
+.application .theme--light.input-group.input-group--solo {
+  background: #fff;
+}
 .theme--light .input-group.input-group--dirty .input-group__selections__comma:not(.input-group__selections__comma--active),
 .application .theme--light.input-group.input-group--dirty .input-group__selections__comma:not(.input-group__selections__comma--active) {
   color: rgba(0,0,0,0.87);
@@ -6099,6 +6103,10 @@ p {
 .theme--dark .input-group.input-group--textarea:not(.input-group--full-width) .input-group__input,
 .application .theme--dark.input-group.input-group--textarea:not(.input-group--full-width) .input-group__input {
   border: 2px solid rgba(255,255,255,0.7);
+}
+.theme--dark .input-group.input-group--solo,
+.application .theme--dark.input-group.input-group--solo {
+  background: #424242;
 }
 .theme--dark .input-group.input-group--dirty .input-group__selections__comma:not(.input-group__selections__comma--active),
 .application .theme--dark.input-group.input-group--dirty .input-group__selections__comma:not(.input-group__selections__comma--active) {
@@ -6260,7 +6268,6 @@ p {
   display: none;
 }
 .input-group.input-group--solo {
-  background: #fff;
   min-height: 46px;
   border-radius: 2px;
   padding: 0;

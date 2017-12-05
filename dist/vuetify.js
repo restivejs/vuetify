@@ -5476,8 +5476,7 @@ module.exports = {
 		"debug:test": "./node_modules/.bin/cross-env NODE_ENV=test node --inspect --inspect-brk ./node_modules/jest/bin/jest.js --no-cache --runInBand --verbose",
 		"test": "cross-env NODE_ENV=test jest -i",
 		"test:coverage": "cross-env NODE_ENV=test jest -i --coverage",
-		"lint": "eslint --ext .js,.vue src",
-		"prepare": "git update-index --skip-worktree .env"
+		"lint": "eslint --ext .js,.vue src"
 	},
 	"description": "Vue.js 2 Semantic Component Framework",
 	"devDependencies": {
@@ -8411,7 +8410,7 @@ __webpack_require__(112);
 
       var selectedItems = this.computedItems.filter(function (i) {
         if (!_this2.isMultiple) {
-          if (_this2.itemKey) {
+          if (_this2.itemKey && val && _this2.getValue(i)) {
             return _this2.getValue(i)[_this2.itemKey] === val[_this2.itemKey];
           } else {
             return _this2.getValue(i) === _this2.getValue(val);
