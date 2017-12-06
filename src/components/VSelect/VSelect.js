@@ -150,8 +150,14 @@ export default {
       }
     },
     filterDuplicates (arr) {
-      const values = arr.map(this.getValue)
-      return arr.filter((el, i) => i === values.indexOf(values[i]))
+      const uniqueValues = new Map()
+      for (let index = 0; index < arr.length; ++index) {
+        const item = arr[index]
+        const val = this.getValue(item)
+
+        !uniqueValues.has(val) && uniqueValues.set(val, item)
+      }
+      return Array.from(uniqueValues.values())
     },
     genDirectives () {
       return [{
@@ -233,14 +239,8 @@ export default {
       }
     },
     findExistingItem (item) {
-      return this.inputValue.findIndex((i) => {
-        const a = this.getValue(i)
-        const b = this.getValue(item)
-
-        if (a !== Object(a)) return a === b
-
-        return this.compareObjects(a, b)
-      })
+      const itemValue = this.getValue(item)
+      return this.inputValue.findIndex(i => this.valueComparator(this.getValue(i), itemValue))
     },
     selectItem (item) {
       if (!this.isMultiple) {
@@ -293,6 +293,7 @@ export default {
     const data = {
       attrs: {
         tabindex: this.isAutocomplete || this.disabled ? -1 : this.tabindex,
+        'data-uid': this._uid,
         ...(this.isAutocomplete ? null : this.$attrs),
         role: this.isAutocomplete ? null : 'combobox'
       }
