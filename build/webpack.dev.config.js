@@ -65,7 +65,7 @@ module.exports = {
     contentBase: resolve('../dev'),
     publicPath: '/dev/',
     host: process.env.HOST || 'localhost',
-    port: process.env.PORT || '8080',
+    port: process.env.PORT || '8088',
     disableHostCheck: true
   },
   plugins: [
