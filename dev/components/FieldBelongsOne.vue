@@ -64,7 +64,6 @@ export default {
       }
     },
     loadOnce() {
-      console.log('1')
       if (this.items.length < 1) {
         this.$nextTick(() => {
           this.debounceLoad()
