@@ -12,7 +12,7 @@
   "types": "index.d.ts",
   "scripts": {
     "watch": "cross-env TARGET=development webpack --config build/config.js --progress --hide-modules --watch",
-    "dev": "cross-env NODE_ENV=development webpack-dev-server --config build/webpack.dev.config.js --open --hot",
+    "dev": "cross-env PORT=8088 NODE_ENV=development webpack-dev-server --config build/webpack.dev.config.js --open --hot",
     "build": "npm run build:dist && npm run build:es5",
     "build:dev": "cross-env NODE_ENV=production node build/webpack.dev.config.js",
     "build:dist": "rimraf dist && cross-env NODE_ENV=production webpack --config build/config.js --progress --hide-modules",
@@ -22,10 +22,7 @@
     "test": "cross-env NODE_ENV=test jest -i",
     "test:coverage": "cross-env NODE_ENV=test jest -i --coverage",
     "lint": "eslint --ext .js,.vue src",
-    "preparecommitmsg": "node dev/prepare-commit-message.js",
-    "precommit": "yarn run lint && yarn test",
-    "prepush": "yarn run lint && yarn test",
-    "prepare": "git update-index --skip-worktree .env"
+    "preparecommitmsg": "node dev/prepare-commit-message.js"
   },
   "description": "Vue.js 2 Semantic Component Framework",
   "devDependencies": {
