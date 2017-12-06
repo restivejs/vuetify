@@ -23,7 +23,6 @@
     "test:coverage": "cross-env NODE_ENV=test jest -i --coverage",
     "lint": "eslint --ext .js,.vue src",
     "preparecommitmsg": "node dev/prepare-commit-message.js",
-    "prepush": "yarn run lint && yarn test",
     "prepare": "git update-index --skip-worktree .env"
   },
   "description": "Vue.js 2 Semantic Component Framework",
