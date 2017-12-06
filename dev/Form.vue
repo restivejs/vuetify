@@ -7,6 +7,8 @@
           <v-flex>
             <field-many2many v-model="item.users"/>
             <field-belongs-one v-model="item.user" @input="val => item.userId = val.id"/>
+            <field-belongs-one v-model="item.user2" @input="val => item.user2Id = val.id"/>
+            <field-many2many v-model="item.users2"/>
             <pre>
               {{item}}
             </pre>
@@ -31,7 +33,9 @@ export default {
     return {
       loading: false,
       item: {
+        user2: null,
         user: null,
+        users2: [],
         users: []
       }
     }
