@@ -1,5 +1,5 @@
 <template>
-  <v-list-group v-if="isNode" :sub-group="root">
+  <v-list-group v-if="isNode" sub-group>
     <v-list-tile slot="activator">
       <v-list-tile-content>
         <v-list-tile-title>{{ model.text }}</v-list-tile-title>
