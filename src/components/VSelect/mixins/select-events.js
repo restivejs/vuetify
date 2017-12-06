@@ -53,6 +53,7 @@ export default {
           }
 
           this.activateInput()
+          this.$emit('focus')
           this.$nextTick(this.focusInput)
         },
         keydown: this.onKeyDown // Located in mixins/select-autocomplete.js
