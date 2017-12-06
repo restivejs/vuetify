@@ -67,7 +67,7 @@ export default {
     // or body, this is the entire purpose of the v-app
     // component and [data-app], stop removing this
     const app = document.querySelector('[data-app]') ||
-      document.body // This is only for unit tests    
+      document.body // This is only for unit tests
 
     events.forEach(event => {
       app.addEventListener(event, onClick, true)

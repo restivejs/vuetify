@@ -13,7 +13,7 @@ export default {
   computed: {
     /**
      * Currently active z-index
-     * 
+     *
      * @return {number}
      */
     activeZIndex () {

@@ -1,6 +1,6 @@
 /**
  * SSRBootable
- * 
+ *
  * @mixin
  *
  * Used in layout components (drawer, toolbar, content)
