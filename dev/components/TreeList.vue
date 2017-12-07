@@ -5,7 +5,7 @@
         <v-list-tile-title>{{ model.text }}</v-list-tile-title>
       </v-list-tile-content>
     </v-list-tile>
-    <v-tree-list v-for="(item, index) in model.children" :key="index" :model="item"></v-tree-list>
+    <v-tree-list v-for="(item, index) in model.children" :key="index" :model="item" :parent="model"></v-tree-list>
   </v-list-group>
   <v-list-tile v-bind="{
     to: !model.target ? model.href : null,
@@ -25,7 +25,8 @@
   export default {
     props: {
       model: Object,
-      root: Object
+      parent: Object,
+      root: Boolean
     },
     data() {
       return {
