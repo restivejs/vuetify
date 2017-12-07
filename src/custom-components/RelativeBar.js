@@ -1,5 +1,4 @@
 export default {
-  name: 'v-relative-bar',
 
   props: {
     top: Boolean

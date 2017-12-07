@@ -1,5 +1,11 @@
-import RelativeBar from './RelativeBar'
+import VRelativeBar from './RelativeBar'
+
+const components = {
+  VRelativeBar
+}
 
 export function install (Vue) {
-  Vue.component(RelativeBar.name, RelativeBar)
+  Object.keys(components).forEach((key) => {
+    Vue.component(key, VRelativeBar)
+  })
 }
