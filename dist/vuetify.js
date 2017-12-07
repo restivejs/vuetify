@@ -524,6 +524,7 @@ function directive(e, el, binding, v) {
   // Note that, because we're in the capture phase, this callback will occure before
   // the bubbling click event on any outside elements.
   if (!clickedInEls(e, elements) && cb(e)) {
+    e.preventDefault();
     // Delay setting toggleable inactive to avoid conflicting
     // with an outside click on any activator toggling our state.
     setTimeout(function () {
@@ -533,9 +534,9 @@ function directive(e, el, binding, v) {
 }
 
 function clickedInEls(e, elements) {
-  // Get position of click
-  var x = e.clientX,
-      y = e.clientY;
+  // Get position of click and touch
+  var x = e.pageX,
+      y = e.pageY;
   // Loop over all included elements to see if click was in any of them
 
   var _iteratorNormalCompletion = true;
@@ -576,6 +577,8 @@ function clickedInEl(el, x, y) {
   return x >= b.left && x <= b.right && y >= b.top && y <= b.bottom;
 }
 
+var events = ['touchend', 'click'];
+
 /* harmony default export */ __webpack_exports__["a"] = ({
   name: 'click-outside',
 
@@ -587,12 +590,19 @@ function clickedInEl(el, x, y) {
     // or body, this is the entire purpose of the v-app
     // component and [data-app], stop removing this
     var app = document.querySelector('[data-app]') || document.body; // This is only for unit tests
-    app.addEventListener('click', onClick, true);
+
+    events.forEach(function (event) {
+      app.addEventListener(event, onClick, true);
+    });
     el._clickOutside = onClick;
   },
   unbind: function unbind(el) {
     var app = document.querySelector('[data-app]') || document.body; // This is only for unit tests
-    app && app.removeEventListener('click', el._clickOutside, true);
+    if (app) {
+      events.forEach(function (event) {
+        app.removeEventListener(event, el._clickOutside, true);
+      });
+    }
   }
 });
 
@@ -1503,12 +1513,27 @@ __WEBPACK_IMPORTED_MODULE_1__VCard__["a" /* default */].install = function insta
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__bootable__ = __webpack_require__(14);
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
+
+
+function validateAttachTarget(val) {
+  var type = typeof val === 'undefined' ? 'undefined' : _typeof(val);
+
+  if (type === 'boolean' || type === 'string') return true;
+
+  return val.nodeType === Node.ELEMENT_NODE;
+}
 
 /* harmony default export */ __webpack_exports__["a"] = ({
   mixins: [__WEBPACK_IMPORTED_MODULE_0__bootable__["a" /* default */]],
 
   props: {
+    attach: {
+      type: [Boolean, String, Object],
+      default: false,
+      validator: validateAttachTarget
+    },
     contentClass: {
       default: ''
     }
@@ -1529,18 +1554,31 @@ __WEBPACK_IMPORTED_MODULE_1__VCard__["a" /* default */].install = function insta
 
   methods: {
     initDetach: function initDetach() {
-      if (this._isDestroyed) return;
+      if (this._isDestroyed || !this.$refs.content ||
+      // Leave menu in place if attached
+      // and dev has not changed target
+      this.attach === '' || // If used as a boolean prop (<v-menu attach>)
+      this.attach === true || // If bound to a boolean (<v-menu :attach="true">)
+      this.attach === 'attach' // If bound as boolean prop in pug (v-menu(attach))
+      ) return;
 
-      var app = document.querySelector('[data-app]');
-
-      if (!app) {
-        return console.warn('Application is missing <v-app> component.');
+      var target = void 0;
+      if (this.attach === false) {
+        // Default, detach to app
+        target = document.querySelector('[data-app]');
+      } else if (typeof this.attach === 'string') {
+        // CSS selector
+        target = document.querySelector(this.attach);
+      } else {
+        // DOM Element
+        target = this.attach;
       }
 
-      // If child has already been removed, bail
-      if (!this.$refs.content) return;
+      if (!target) {
+        return console.warn('Unable to locate target ' + (this.attach || '[data-app]'));
+      }
 
-      app.insertBefore(this.$refs.content, app.firstChild);
+      target.insertBefore(this.$refs.content, target.firstChild);
     }
   }
 });
@@ -1611,7 +1649,7 @@ __WEBPACK_IMPORTED_MODULE_1__VCard__["a" /* default */].install = function insta
 "use strict";
 /**
  * SSRBootable
- * 
+ *
  * @mixin
  *
  * Used in layout components (drawer, toolbar, content)
@@ -2101,6 +2139,8 @@ __webpack_require__(84);
       if (e.target === this.overlay || e.type !== 'keydown' && e.target === document.body || this.checkPath(e)) e.preventDefault();
     },
     hasScrollbar: function hasScrollbar(el) {
+      if (!el || el.nodeType !== Node.ELEMENT_NODE) return false;
+
       var style = window.getComputedStyle(el);
       return ['auto', 'scroll'].includes(style['overflow-y']) && el.scrollHeight > el.clientHeight;
     },
@@ -2226,14 +2266,22 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
   },
 
   computed: {
+    /**
+     * Currently active z-index
+     *
+     * @return {number}
+     */
     activeZIndex: function activeZIndex() {
       var content = this.stackElement || this.$refs.content;
       // Return current zindex if not active
-      if (!this.isActive) return Object(__WEBPACK_IMPORTED_MODULE_0__util_helpers__["h" /* getZIndex */])(content);
+
+      var index = !this.isActive ? Object(__WEBPACK_IMPORTED_MODULE_0__util_helpers__["h" /* getZIndex */])(content) : this.getMaxZIndex(this.stackExclude || [content]) + 2;
+
+      if (index == null) return index;
 
       // Return max current z-index (excluding self) + 2
       // (2 to leave room for an overlay below, if needed)
-      return this.getMaxZIndex(this.stackExclude || [content]) + 2;
+      return parseInt(index);
     }
   },
   methods: {
@@ -3097,7 +3145,7 @@ __WEBPACK_IMPORTED_MODULE_0__VMenu__["a" /* default */].install = function insta
     /**
      * Clear any pending delay
      * timers from executing
-     * 
+     *
      * @return {void}
      */
     clearDelay: function clearDelay() {
@@ -3108,10 +3156,10 @@ __WEBPACK_IMPORTED_MODULE_0__VMenu__["a" /* default */].install = function insta
     /**
      * Runs callback after
      * a specified delay
-     * 
+     *
      * @param  {String}   type
      * @param  {Function} cb
-     * 
+     *
      * @return {void}
      */
     runDelay: function runDelay(type, cb) {
@@ -3131,7 +3179,9 @@ __WEBPACK_IMPORTED_MODULE_0__VMenu__["a" /* default */].install = function insta
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__positionable__ = __webpack_require__(20);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stackable__ = __webpack_require__(30);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__themeable__ = __webpack_require__(1);
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 
 
 
@@ -3163,7 +3213,7 @@ var dimensions = {
    * As well as be manually positioned
    */
 };/* harmony default export */ __webpack_exports__["a"] = ({
-  mixins: [__WEBPACK_IMPORTED_MODULE_0__positionable__["a" /* default */], __WEBPACK_IMPORTED_MODULE_1__stackable__["a" /* default */]],
+  mixins: [__WEBPACK_IMPORTED_MODULE_0__positionable__["a" /* default */], __WEBPACK_IMPORTED_MODULE_1__stackable__["a" /* default */], __WEBPACK_IMPORTED_MODULE_2__themeable__["a" /* default */]],
 
   data: function data() {
     return {
@@ -3180,7 +3230,7 @@ var dimensions = {
   props: {
     activator: {
       default: null,
-      validate: function validate(val) {
+      validator: function validator(val) {
         return ['string', 'object'].includes(typeof val === 'undefined' ? 'undefined' : _typeof(val));
       }
     },
@@ -3195,19 +3245,19 @@ var dimensions = {
       default: 0
     },
     nudgeLeft: {
-      type: Number,
+      type: [Number, String],
       default: 0
     },
     nudgeRight: {
-      type: Number,
+      type: [Number, String],
       default: 0
     },
     nudgeTop: {
-      type: Number,
+      type: [Number, String],
       default: 0
     },
     nudgeWidth: {
-      type: Number,
+      type: [Number, String],
       default: 0
     },
     offsetOverflow: Boolean,
@@ -3226,8 +3276,45 @@ var dimensions = {
   },
 
   computed: {
+    computedLeft: function computedLeft() {
+      var a = this.dimensions.activator;
+      var c = this.dimensions.content;
+      var minWidth = a.width < c.width ? c.width : a.width;
+      var left = 0;
+
+      if (this.isAttached) {
+        left += this.left ? -a.width : 0;
+      } else {
+        left += this.left ? a.left - (minWidth - a.width) : a.left;
+      }
+
+      if (this.offsetX) left += this.left ? -a.width : a.width;
+      if (this.nudgeLeft) left -= parseInt(this.nudgeLeft);
+      if (this.nudgeRight) left += parseInt(this.nudgeRight);
+
+      return left;
+    },
+    computedTop: function computedTop() {
+      var a = this.dimensions.activator;
+      var c = this.dimensions.content;
+      var top = 0;
+
+      if (!this.isAttached) {
+        top = this.top ? a.bottom - c.height : a.top;
+        top += this.pageYOffset;
+      }
+
+      if (this.offsetY) top += this.top ? -a.height : a.height;
+      if (this.nudgeTop) top -= this.nudgeTop;
+      if (this.nudgeBottom) top += this.nudgeBottom;
+
+      return top;
+    },
     hasActivator: function hasActivator() {
       return !!this.$slots.activator || this.activator;
+    },
+    isAttached: function isAttached() {
+      return this.attach !== false;
     }
   },
 
@@ -3241,6 +3328,11 @@ var dimensions = {
       val && this.callActivate() || this.callDeactivate();
     }
   },
+
+  beforeMount: function beforeMount() {
+    this.checkForWindow();
+  },
+
 
   methods: {
     absolutePosition: function absolutePosition() {
@@ -3257,34 +3349,10 @@ var dimensions = {
     },
     activate: function activate() {},
     calcLeft: function calcLeft() {
-      var a = this.dimensions.activator;
-      var c = this.dimensions.content;
-      // Content always has a min width
-      // of its activator. This is applied
-      // when the menu is shown, but not
-      // reflected in the getBoundingClientRect
-      // method
-      var minWidth = a.width < c.width ? c.width : a.width;
-      var left = this.left ? a.right - minWidth : a.left;
-
-      if (this.offsetX) left += this.left ? -a.width : a.width;
-      if (this.nudgeLeft) left -= this.nudgeLeft;
-      if (this.nudgeRight) left += this.nudgeRight;
-
-      return left;
+      return (this.isAttached ? this.computedLeft : this.calcXOverflow(this.computedLeft)) + 'px';
     },
     calcTop: function calcTop() {
-      this.checkForWindow();
-
-      var a = this.dimensions.activator;
-      var c = this.dimensions.content;
-      var top = this.top ? a.bottom - c.height : a.top;
-
-      if (this.offsetY) top += this.top ? -a.height : a.height;
-      if (this.nudgeTop) top -= this.nudgeTop;
-      if (this.nudgeBottom) top += this.nudgeBottom;
-
-      return top + this.pageYOffset;
+      return (this.isAttached ? this.computedTop : this.calcYOverflow(this.computedTop)) + 'px';
     },
     calcXOverflow: function calcXOverflow(left) {
       var parsedMaxWidth = isNaN(parseInt(this.maxWidth)) ? 0 : parseInt(this.maxWidth);
@@ -3335,7 +3403,9 @@ var dimensions = {
       this.deactivate();
     },
     checkForWindow: function checkForWindow() {
-      this.hasWindow = typeof window !== 'undefined';
+      if (!this.hasWindow) {
+        this.hasWindow = typeof window !== 'undefined';
+      }
 
       if (this.hasWindow) {
         this.pageYOffset = this.getOffsetTop();
@@ -3374,13 +3444,13 @@ var dimensions = {
           bottom = _el$getBoundingClient.bottom,
           left = _el$getBoundingClient.left,
           right = _el$getBoundingClient.right,
-          height = _el$getBoundingClient.height,
-          width = _el$getBoundingClient.width;
+          width = _el$getBoundingClient.width,
+          height = _el$getBoundingClient.height;
 
       return {
+        top: top, bottom: bottom, left: left, right: right, width: width, height: height,
         offsetTop: el.offsetTop,
-        scrollHeight: el.scrollHeight,
-        top: top, bottom: bottom, left: left, right: right, height: height, width: width
+        offsetLeft: el.offsetLeft
       };
     },
     sneakPeek: function sneakPeek(cb) {
@@ -3389,7 +3459,7 @@ var dimensions = {
       requestAnimationFrame(function () {
         var el = _this.$refs.content;
 
-        if (_this.isShown(el)) return cb();
+        if (!el || _this.isShown(el)) return cb();
 
         el.style.display = 'inline-block';
         cb();
@@ -3404,7 +3474,7 @@ var dimensions = {
       });
     },
     isShown: function isShown(el) {
-      return !!el && el.style.display !== 'none';
+      return el.style.display !== 'none';
     },
     updateDimensions: function updateDimensions() {
       var _this3 = this;
@@ -3412,7 +3482,7 @@ var dimensions = {
       var dimensions = {};
 
       // Activator should already be shown
-      dimensions.activator = !this.hasActivator || this.absolute ? this.absolutePosition() : this.measure(this.getActivator());
+      dimensions.activator = !this.hasActivator ? this.absolutePosition() : this.measure(this.getActivator());
 
       // Display and hide to get dimensions
       this.sneakPeek(function () {
@@ -5485,7 +5555,7 @@ module.exports = {
 	"types": "index.d.ts",
 	"scripts": {
 		"watch": "cross-env TARGET=development webpack --config build/config.js --progress --hide-modules --watch",
-		"dev": "cross-env NODE_ENV=development webpack-dev-server --config build/webpack.dev.config.js --open --hot",
+		"dev": "cross-env PORT=8088 NODE_ENV=development webpack-dev-server --config build/webpack.dev.config.js --open --hot",
 		"build": "npm run build:dist && npm run build:es5",
 		"build:dev": "cross-env NODE_ENV=production node build/webpack.dev.config.js",
 		"build:dist": "rimraf dist && cross-env NODE_ENV=production webpack --config build/config.js --progress --hide-modules",
@@ -5495,10 +5565,7 @@ module.exports = {
 		"test": "cross-env NODE_ENV=test jest -i",
 		"test:coverage": "cross-env NODE_ENV=test jest -i --coverage",
 		"lint": "eslint --ext .js,.vue src",
-		"preparecommitmsg": "node dev/prepare-commit-message.js",
-		"precommit": "yarn run lint && yarn test",
-		"prepush": "yarn run lint && yarn test",
-		"prepare": "git update-index --skip-worktree .env"
+		"preparecommitmsg": "node dev/prepare-commit-message.js"
 	},
 	"description": "Vue.js 2 Semantic Component Framework",
 	"devDependencies": {
@@ -6664,7 +6731,7 @@ __webpack_require__(79);
     classes: function classes() {
       return {
         'bottom-nav--absolute': this.absolute,
-        'bottom-nav--fixed': this.fixed || this.app,
+        'bottom-nav--fixed': !this.absolute && (this.app || this.fixed),
         'bottom-nav--shift': this.shift,
         'bottom-nav--active': this.value
       };
@@ -8415,10 +8482,14 @@ __webpack_require__(112);
       }
     },
     filterDuplicates: function filterDuplicates(arr) {
-      var values = arr.map(this.getValue);
-      return arr.filter(function (el, i) {
-        return i === values.indexOf(values[i]);
-      });
+      var uniqueValues = new Map();
+      for (var index = 0; index < arr.length; ++index) {
+        var item = arr[index];
+        var val = this.getValue(item);
+
+        !uniqueValues.has(val) && uniqueValues.set(val, item);
+      }
+      return Array.from(uniqueValues.values());
     },
     genDirectives: function genDirectives() {
       var _this = this;
@@ -8502,13 +8573,9 @@ __webpack_require__(112);
     findExistingItem: function findExistingItem(item) {
       var _this5 = this;
 
+      var itemValue = this.getValue(item);
       return this.inputValue.findIndex(function (i) {
-        var a = _this5.getValue(i);
-        var b = _this5.getValue(item);
-
-        if (a !== Object(a)) return a === b;
-
-        return _this5.compareObjects(a, b);
+        return _this5.valueComparator(_this5.getValue(i), itemValue);
       });
     },
     selectItem: function selectItem(item) {
@@ -8561,7 +8628,8 @@ __webpack_require__(112);
 
     var data = {
       attrs: _extends({
-        tabindex: this.isAutocomplete || this.disabled ? -1 : this.tabindex
+        tabindex: this.isAutocomplete || this.disabled ? -1 : this.tabindex,
+        'data-uid': this._uid
       }, this.isAutocomplete ? null : this.$attrs, {
         role: this.isAutocomplete ? null : 'combobox'
       })
@@ -9097,10 +9165,9 @@ __webpack_require__(120);
 
   computed: {
     calculatedLeft: function calculatedLeft() {
-      var left = this.calcLeft;
-      if (this.auto) left = this.calcLeftAuto;
+      if (!this.auto) return this.calcLeft();
 
-      return this.calcXOverflow(left()) + 'px';
+      return this.calcXOverflow(this.calcLeftAuto()) + 'px';
     },
     calculatedMaxHeight: function calculatedMaxHeight() {
       return this.auto ? '200px' : isNaN(this.maxHeight) ? this.maxHeight : this.maxHeight + 'px';
@@ -9120,9 +9187,9 @@ __webpack_require__(120);
       return Math.min(calculatedMaxWidth, minWidth) + 'px';
     },
     calculatedTop: function calculatedTop() {
-      var top = this.auto ? this.calcTopAuto : this.calcTop;
+      if (!this.auto || this.absolute) return this.calcTop();
 
-      return this.calcYOverflow(top()) + 'px';
+      return this.calcYOverflow(this.calcTopAuto()) + 'px';
     },
     styles: function styles() {
       return {
@@ -9279,6 +9346,8 @@ __webpack_require__(120);
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 /**
@@ -9344,10 +9413,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
       return directives;
     },
     genContent: function genContent() {
-      var _this2 = this;
+      var _class,
+          _this2 = this;
 
       var options = {
-        'class': [('menu__content ' + this.contentClass).trim(), { 'menuable__content__active': this.isActive }],
+        staticClass: 'menu__content',
+        'class': (_class = {}, _defineProperty(_class, this.contentClass.trim(), true), _defineProperty(_class, 'menuable__content__active', this.isActive), _defineProperty(_class, 'theme--dark', this.dark), _defineProperty(_class, 'theme--light', this.light), _class),
         style: this.styles,
         directives: this.genDirectives(),
         ref: 'content',
@@ -9445,7 +9516,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 "use strict";
 /**
  * Menu position
- * 
+ *
  * @mixin
  *
  * Used for calculating an automatic position (used for VSelect)
@@ -9468,13 +9539,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
       this.$refs.content.scrollTop = scrollTop;
     },
     calcLeftAuto: function calcLeftAuto() {
-      var a = this.dimensions.activator;
+      if (this.isAbsolute) return 0;
 
-      return parseInt(a.left - this.defaultOffset * 2);
+      return parseInt(this.dimensions.activator.left - this.defaultOffset * 2);
     },
     calcTopAuto: function calcTopAuto() {
-      if (!this.hasActivator) return this.calcTop();
-
       var selectedIndex = Array.from(this.tiles).findIndex(function (n) {
         return n.classList.contains('list__tile--active');
       });
@@ -9482,7 +9551,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
       if (selectedIndex === -1) {
         this.selectedIndex = null;
 
-        return this.calcTop();
+        return this.computedTop;
       }
 
       this.selectedIndex = selectedIndex;
@@ -9503,7 +9572,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
       // Is always off by 1 pixel, send help (┛ಠ_ಠ)┛彡┻━┻
       offsetPadding--;
 
-      return this.calcTop() + offsetPadding - actingIndex * (this.defaultOffset * 6);
+      return this.computedTop + offsetPadding - actingIndex * (this.defaultOffset * 6);
     }
   }
 });
@@ -9904,6 +9973,7 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
           }
 
           _this2.activateInput();
+          _this2.$emit('focus');
           _this2.$nextTick(_this2.focusInput);
         },
         keydown: this.onKeyDown // Located in mixins/select-autocomplete.js
@@ -9941,10 +10011,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
         props: {
           activator: this.$el,
           auto: this.auto,
+          attach: this.attach && '[data-uid="' + this._uid + '"]',
           closeOnClick: false,
           closeOnContentClick: !this.isMultiple,
           contentClass: this.computedContentClass,
+          dark: this.dark,
           disabled: this.disabled,
+          light: this.light,
           maxHeight: this.maxHeight,
           nudgeTop: this.nudgeTop,
           offsetY: this.shouldOffset,
@@ -10278,20 +10351,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
       var value = Object(__WEBPACK_IMPORTED_MODULE_0__util_helpers__["g" /* getObjectValueByPath */])(item, field);
 
       return typeof value === 'undefined' ? item : value;
-    },
-    compareObjects: function compareObjects(a, b) {
-      var aProps = Object.keys(a);
-      var bProps = Object.keys(b);
-
-      if (aProps.length !== bProps.length) return false;
-
-      for (var i = 0, length = aProps.length; i < length; i++) {
-        var propName = aProps[i];
-
-        if (a[propName] !== b[propName]) return false;
-      }
-
-      return true;
     }
   }
 });
@@ -10332,7 +10391,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
       this.menuIsActive = true;
     },
     toggleMenu: function toggleMenu() {
-      if (this.menuIsVisible) return this.hideMenu();
+      if (this.disabled || this.readonly || this.menuIsVisible) return this.hideMenu();
 
       this.showMenu();
       this.focusInput();
@@ -10352,6 +10411,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
       default: 'arrow_drop_down'
     },
     appendIconCb: Function,
+    attach: Boolean,
     auto: Boolean,
     autocomplete: Boolean,
     browserAutocomplete: {
@@ -10416,7 +10476,18 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     segmented: Boolean,
     singleLine: Boolean,
     solo: Boolean,
-    tags: Boolean
+    tags: Boolean,
+    valueComparator: {
+      type: Function,
+      default: function _default(a, b) {
+        if (a !== Object(a)) return a === b;
+        var aProps = Object.keys(a);
+        var bProps = Object.keys(b);
+        return aProps.length === bProps.length && aProps.every(function (propName) {
+          return a[propName] === b[propName];
+        });
+      }
+    }
   }
 });
 
@@ -12994,7 +13065,7 @@ __webpack_require__(174);
         'navigation-drawer--absolute': this.absolute,
         'navigation-drawer--clipped': this.clipped,
         'navigation-drawer--close': !this.isActive,
-        'navigation-drawer--fixed': this.fixed || this.app,
+        'navigation-drawer--fixed': !this.absolute && (this.app || this.fixed),
         'navigation-drawer--floating': this.floating,
         'navigation-drawer--is-booted': this.isBooted,
         'navigation-drawer--is-mobile': this.isMobile,
@@ -13040,17 +13111,11 @@ __webpack_require__(174);
     styles: function styles() {
       var styles = {
         height: this.calculatedHeight,
+        marginTop: this.marginTop + 'px',
         maxHeight: 'calc(100% - ' + this.maxHeight + 'px)',
+        transform: 'translateX(' + this.calculatedTransform + 'px)',
         width: this.calculatedWidth + 'px'
       };
-
-      if (this.marginTop) {
-        styles.marginTop = this.marginTop + 'px';
-      }
-
-      if (this.calculatedTransform) {
-        styles.transform = 'translateX(' + this.calculatedTransform + 'px)';
-      }
 
       return styles;
     }
@@ -13387,8 +13452,8 @@ __webpack_require__(177);
     genItems: function genItems(h) {
       var _this3 = this;
 
-      return this.items.map(function (i) {
-        return h('li', { key: i }, [isNaN(i) && h('span', { class: 'pagination__more' }, [i]) || _this3.genItem(h, i)]);
+      return this.items.map(function (i, index) {
+        return h('li', { key: index }, [isNaN(i) && h('span', { class: 'pagination__more' }, [i]) || _this3.genItem(h, i)]);
       });
     }
   },
@@ -15392,7 +15457,7 @@ __webpack_require__(212);
       return this.addBackgroundColorClassChecks(Object.assign({
         'system-bar--lights-out': this.lightsOut,
         'system-bar--absolute': this.absolute,
-        'system-bar--fixed': this.fixed || this.app,
+        'system-bar--fixed': !this.absolute && (this.app || this.fixed),
         'system-bar--status': this.status,
         'system-bar--window': this.window
       }, this.themeClasses));
@@ -17267,11 +17332,12 @@ __webpack_require__(230);
         desktop: 64,
         dense: 48
       },
-      isActiveProxy: false,
+      isActive: true,
       isExtended: false,
       isScrollingUp: false,
       previousScroll: null,
       previousScrollDirection: null,
+      savedScroll: 0,
       target: null
     };
   },
@@ -17297,10 +17363,7 @@ __webpack_require__(230);
       }
     },
     invertedScroll: Boolean,
-    manualScroll: {
-      type: Boolean,
-      default: null
-    },
+    manualScroll: Boolean,
     prominent: Boolean,
     scrollOffScreen: Boolean,
     scrollTarget: String,
@@ -17340,13 +17403,13 @@ __webpack_require__(230);
     classes: function classes() {
       return this.addBackgroundColorClassChecks({
         'toolbar': true,
-        'elevation-0': this.flat || !this.isActiveProxy && !this.tabs,
+        'elevation-0': this.flat || !this.isActive && !this.tabs,
         'toolbar--absolute': this.absolute,
         'toolbar--card': this.card,
         'toolbar--clipped': this.clippedLeft || this.clippedRight,
         'toolbar--dense': this.dense,
         'toolbar--extended': this.isExtended,
-        'toolbar--fixed': this.fixed || this.app,
+        'toolbar--fixed': !this.absolute && (this.app || this.fixed),
         'toolbar--floating': this.floating,
         'toolbar--is-booted': this.isBooted,
         'toolbar--prominent': this.prominent,
@@ -17364,61 +17427,64 @@ __webpack_require__(230);
 
       return this.$vuetify.application.right;
     },
-    isActive: function isActive() {
-      if (!this.scrollOffScreen) return true;
-      if (this.manualScroll != null) return !this.manualScroll;
-
-      return this.invertedScroll ? this.currentScroll > this.scrollThreshold : this.currentScroll < this.scrollThreshold || this.isScrollingUp;
+    computedTransform: function computedTransform() {
+      return !this.isActive ? -this.computedHeight : 0;
+    },
+    currentThreshold: function currentThreshold() {
+      return Math.abs(this.currentScroll - this.savedScroll);
     },
     styles: function styles() {
-      var style = {};
-
-      if (!this.isActiveProxy) {
-        style.transform = 'translateY(-' + this.computedHeight + 'px)';
-      }
-
-      if (this.computedMarginTop) {
-        style.marginTop = this.computedMarginTop + 'px';
-      }
-
-      if (this.app) {
-        style.paddingRight = this.computedPaddingRight + 'px';
-        style.paddingLeft = this.computedPaddingLeft + 'px';
-      }
-
-      return style;
+      return {
+        marginTop: this.computedMarginTop + 'px',
+        paddingRight: this.computedPaddingRight + 'px',
+        paddingLeft: this.computedPaddingLeft + 'px',
+        transform: 'translateY(' + this.computedTransform + 'px)'
+      };
     }
   },
 
   watch: {
-    // This is to avoid an accidental
-    // false positive when scrolling.
-    // sometimes for 1 frame it appears
-    // as if the direction has changed
-    // but it actually has not
-    isActive: {
-      immediate: true,
-      handler: function handler(val) {
-        var _this = this;
-
-        clearTimeout(this.activeTimeout);
-
-        this.activeTimeout = setTimeout(function () {
-          _this.isActiveProxy = val;
-        }, 20);
+    currentThreshold: function currentThreshold(val) {
+      if (this.invertedScroll) {
+        return this.isActive = this.currentScroll > this.scrollThreshold;
       }
+
+      if (val < this.scrollThreshold || !this.isBooted) return;
+
+      this.isActive = this.isScrollingUp;
+      this.savedScroll = this.currentScroll;
+    },
+    isActive: function isActive() {
+      this.savedScroll = 0;
+    },
+    invertedScroll: function invertedScroll(val) {
+      this.isActive = !val;
+    },
+    manualScroll: function manualScroll(val) {
+      this.isActive = !val;
+    },
+    isScrollingUp: function isScrollingUp(val) {
+      this.savedScroll = this.savedScroll || this.currentScroll;
     }
   },
+
+  beforeMount: function beforeMount() {
+    if (this.invertedScroll || this.manualScroll) this.isActive = false;
+  },
+  mounted: function mounted() {
+    if (this.scrollTarget) {
+      this.target = document.querySelector(this.scrollTarget);
+    }
+  },
+
 
   methods: {
     onScroll: function onScroll() {
       if (typeof window === 'undefined') return;
 
-      if (!this.target) {
-        this.target = this.scrollTarget ? document.querySelector(this.scrollTarget) : window;
-      }
+      var target = this.target || window;
 
-      this.currentScroll = this.scrollTarget ? this.target.scrollTop : this.target.pageYOffset || document.documentElement.scrollTop;
+      this.currentScroll = this.scrollTarget ? target.scrollTop : target.pageYOffset || document.documentElement.scrollTop;
 
       this.isScrollingUp = this.currentScroll < this.previousScroll;
 
