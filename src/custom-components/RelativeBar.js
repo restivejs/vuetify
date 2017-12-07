@@ -6,12 +6,12 @@ export default {
   },
 
   computed: {
-    classes() {
+    classes () {
       return {
         'content--is-booted': this.isBooted
       }
     },
-    styles() {
+    styles () {
       const {
         bar, top, right, footer, bottom, left
       } = this.$vuetify.application
@@ -24,20 +24,19 @@ export default {
       if (this.top) {
         styles.top = `${top + bar}px`
         styles.left = `${left}px`
-      }
-      else {
+      } else {
         styles.bottom = `${footer + bottom}px`
         styles.right = `${right}px`
       }
 
-      return styles;
+      return styles
     }
   },
 
-  render(h) {
+  render (h) {
     console.log(this.styles)
     return h('div', {
-      style: this.styles,
+      style: this.styles
     }, this.$slots.default)
   }
 }
