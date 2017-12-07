@@ -1,11 +1,14 @@
 import VRelativeBar from './RelativeBar'
+import VTreeList from './TreeList'
 
 const components = {
-  VRelativeBar
+  VRelativeBar,
+  VTreeList
 }
 
 export function install (Vue) {
   Object.keys(components).forEach((key) => {
-    Vue.component(key, VRelativeBar)
+    const component = components[key]
+    Vue.component(component.name || key, component)
   })
 }
