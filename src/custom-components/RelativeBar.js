@@ -34,7 +34,6 @@ export default {
   },
 
   render (h) {
-    console.log(this.styles)
     return h('div', {
       style: this.styles
     }, this.$slots.default)

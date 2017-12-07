@@ -3,6 +3,7 @@ import Semver from 'semver'
 import { peerDependencies, version } from '../package.json'
 import * as components from './components'
 import * as directives from './directives'
+import * as CustomComponent from './custom-components'
 
 function Vuetify (Vue, args) {
   const Vuetify = components.Vuetify
@@ -12,6 +13,8 @@ function Vuetify (Vue, args) {
     directives,
     ...args
   })
+
+  Vue.use(CustomComponent)
 }
 
 Vuetify.version = version
