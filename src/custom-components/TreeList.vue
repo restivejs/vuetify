@@ -28,19 +28,19 @@
       parent: Object,
       root: Boolean
     },
-    data() {
+    data () {
       return {
         open: true
       }
     },
     computed: {
-      isNode() {
+      isNode () {
         return this.model.children &&
           this.model.children.length
       }
     },
     methods: {
-      toggle() {
+      toggle () {
         if (this.isNode) {
           this.open = !this.open
         }

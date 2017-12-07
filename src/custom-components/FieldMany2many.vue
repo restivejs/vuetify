@@ -29,7 +29,7 @@
 </template>
 <script>
 export default {
-  data() {
+  data () {
     return {
       selected: [],
       search: '',
@@ -40,7 +40,7 @@ export default {
   props: {
     itemText: {
       type: String,
-      default() {
+      default () {
         return 'name'
       }
     },
@@ -48,14 +48,14 @@ export default {
     label: String,
     model: String
   },
-  created() {
+  created () {
     if (this.value.length > 0 && this.selected.length === 0) {
       this.selected = JSON.parse(JSON.stringify(this.value))
       this.items = JSON.parse(JSON.stringify(this.value))
     }
   },
   watch: {
-    value(val) {
+    value (val) {
       if (this.changeByThis) {
         this.changeByThis = false
         return
@@ -65,12 +65,12 @@ export default {
         this.items = val
       }
     },
-    search(val) {
+    search (val) {
       val && this.debounceLoad()
     }
   },
   methods: {
-    emitInput(selected) {
+    emitInput (selected) {
       this.changeByThis = true
       this.$emit('input', selected.map(item => {
         if (item.id) {
@@ -80,12 +80,12 @@ export default {
         }
       }))
     },
-    loadOnce() {
+    loadOnce () {
       if (this.items.length === this.selected.length) {
         this.debounceLoad()
       }
     },
-    debounceLoad() {
+    debounceLoad () {
       setTimeout(() => {
         this.items = [{ id: '1', name: 'user1' }, { id: '2', name: 'user2' }, { id: '3', name: 'user3' }]
       }, 300)

@@ -1,9 +1,11 @@
 import VRelativeBar from './RelativeBar'
 import VTreeList from './TreeList'
+import VScrollTop from './ScrollTop'
 
 const components = {
   VRelativeBar,
-  VTreeList
+  VTreeList,
+  VScrollTop
 }
 
 export function install (Vue) {

@@ -20,22 +20,22 @@ export default{
       default: true
     }
   },
-  data(){
+  data () {
     return {
       innerText: this.value,
       isLocked: false
     }
   },
   watch: {
-    'value'(){
+    'value' () {
       if (!this.isLocked || !this.innerText) {
-        this.innerText = this.value;
+        this.innerText = this.value
       }
     }
   },
   methods: {
-    changeText(){
-      this.$emit('input', this.$el.innerHTML);
+    changeText () {
+      this.$emit('input', this.$el.innerHTML)
     }
   }
 }
